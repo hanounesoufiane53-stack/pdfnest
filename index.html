@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PDFnest — Every tool for your PDFs</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪶</text></svg>"/>
+  <style>
+/* ── PDFnest Global Styles ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --green-50:  #f0faf6;
+  --green-100: #d6f2e6;
+  --green-200: #9fe1cb;
+  --green-400: #5dcaa5;
+  --green-600: #1d9e75;
+  --green-700: #0f6e56;
+  --green-800: #085041;
+  --green-900: #04342c;
+
+  --cream-50:  #fdfcf8;
+  --cream-100: #f7f5ef;
+  --cream-200: #ede9e0;
+
+  --gray-100: #f5f4f1;
+  --gray-200: #e8e6e1;
+  --gray-400: #b0ada6;
+  --gray-600: #6e6b64;
+  --gray-800: #3a3834;
+  --gray-900: #1e1d1a;
+
+  --white: #ffffff;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.05);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+body { font-family: var(--font); background: var(--cream-50); color: var(--gray-800); line-height: 1.6; font-size: 15px; }
+
+a { text-decoration: none; color: inherit; }
+img { max-width: 100%; }
+button { cursor: pointer; font-family: var(--font); }
+input, textarea, select { font-family: var(--font); }
+
+/* ── HEADER ── */
+.header {
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  padding: 0 2rem;
+  height: 62px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-sm);
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon {
+  width: 36px; height: 36px;
+  background: var(--green-400);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+.logo-name { font-size: 19px; font-weight: 600; color: var(--green-800); letter-spacing: -0.3px; }
+.logo-name span { color: var(--green-600); }
+
+.nav { display: flex; align-items: center; gap: 4px; }
+.nav a {
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--gray-600);
+  transition: background 0.15s, color 0.15s;
+}
+.nav a:hover { background: var(--gray-100); color: var(--gray-900); }
+.nav .btn-primary {
+  background: var(--green-600);
+  color: var(--white);
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-weight: 500;
+  margin-left: 6px;
+  transition: background 0.15s;
+}
+.nav .btn-primary:hover { background: var(--green-700); }
+.nav .btn-outline {
+  border: 1.5px solid var(--green-400);
+  color: var(--green-700);
+  padding: 7px 16px;
+  border-radius: 10px;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+.nav .btn-outline:hover { background: var(--green-50); }
+
+/* ── HERO ── */
+.hero {
+  background: var(--cream-100);
+  padding: 5rem 2rem 4rem;
+  text-align: center;
+  border-bottom: 1px solid var(--gray-200);
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--green-100);
+  color: var(--green-800);
+  font-size: 12px; font-weight: 500;
+  padding: 5px 14px; border-radius: 20px;
+  margin-bottom: 1.5rem;
+}
+.hero h1 {
+  font-size: 42px; font-weight: 700;
+  color: var(--gray-900);
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  letter-spacing: -0.5px;
+}
+.hero h1 span { color: var(--green-600); }
+.hero p { font-size: 17px; color: var(--gray-600); max-width: 480px; margin: 0 auto 2rem; }
+
+.search-wrap {
+  display: flex;
+  max-width: 500px;
+  margin: 0 auto 2rem;
+  background: var(--white);
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-wrap:focus-within { border-color: var(--green-400); box-shadow: 0 0 0 3px rgba(93,202,165,0.15); }
+.search-wrap input {
+  flex: 1; border: none; outline: none;
+  padding: 13px 18px; font-size: 14px;
+  background: transparent; color: var(--gray-800);
+}
+.search-wrap input::placeholder { color: var(--gray-400); }
+.search-wrap button {
+  background: var(--green-600); border: none;
+  color: white; padding: 0 20px; font-size: 17px;
+  transition: background 0.15s;
+}
+.search-wrap button:hover { background: var(--green-700); }
+
+.hero-stats { display: flex; justify-content: center; gap: 2.5rem; flex-wrap: wrap; }
+.hero-stat { text-align: center; }
+.hero-stat strong { display: block; font-size: 20px; color: var(--green-700); font-weight: 700; }
+.hero-stat small { font-size: 12px; color: var(--gray-500, #888); }
+
+/* ── TABS ── */
+.tabs-bar {
+  display: flex; justify-content: center;
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  padding: 0 1rem;
+  gap: 2px; overflow-x: auto;
+  position: sticky; top: 62px; z-index: 90;
+}
+.tab-btn {
+  padding: 14px 18px;
+  font-size: 13px; font-weight: 500;
+  color: var(--gray-600);
+  border: none; background: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer; white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab-btn:hover { color: var(--green-700); }
+.tab-btn.active { color: var(--green-700); border-bottom-color: var(--green-500, #1d9e75); }
+
+/* ── TOOLS GRID ── */
+.tools-section { padding: 2.5rem 2rem; max-width: 1040px; margin: 0 auto; }
+.section-label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--gray-400);
+  margin-bottom: 1rem;
+}
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  gap: 12px;
+}
+.tool-card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+  display: flex; flex-direction: column; gap: 10px;
+  text-decoration: none;
+}
+.tool-card:hover {
+  border-color: var(--green-400);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+.tool-icon {
+  width: 46px; height: 46px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+.tool-name { font-size: 13px; font-weight: 600; color: var(--gray-900); line-height: 1.3; }
+.tool-desc { font-size: 11px; color: var(--gray-600); line-height: 1.4; }
+.badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 6px; font-weight: 600; margin-left: 4px; vertical-align: middle; }
+.badge-new { background: var(--green-100); color: var(--green-800); }
+.badge-pro { background: #faeeda; color: #633806; }
+
+/* icon color themes */
+.ic-teal   { background: #e1f5ee; color: #0f6e56; }
+.ic-blue   { background: #e6f1fb; color: #185fa5; }
+.ic-amber  { background: #faeeda; color: #854f0b; }
+.ic-green  { background: #eaf3de; color: #3b6d11; }
+.ic-purple { background: #eeedfe; color: #534ab7; }
+.ic-coral  { background: #faece7; color: #993c1d; }
+.ic-pink   { background: #fbeaf0; color: #993556; }
+.ic-gray   { background: #f1efe8; color: #5f5e5a; }
+
+/* ── TOOL PAGE ── */
+.tool-page { max-width: 760px; margin: 3rem auto; padding: 0 2rem; }
+.tool-page-header { text-align: center; margin-bottom: 2.5rem; }
+.tool-page-header .tool-icon-lg {
+  width: 72px; height: 72px; border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px; margin: 0 auto 1.2rem;
+}
+.tool-page-header h1 { font-size: 28px; font-weight: 700; color: var(--gray-900); margin-bottom: 0.5rem; }
+.tool-page-header p { color: var(--gray-600); max-width: 420px; margin: 0 auto; }
+
+.upload-zone {
+  border: 2px dashed var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: 3rem 2rem;
+  text-align: center;
+  background: var(--white);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  margin-bottom: 1.5rem;
+}
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--green-400);
+  background: var(--green-50);
+}
+.upload-zone .upload-icon { font-size: 40px; color: var(--green-400); margin-bottom: 1rem; }
+.upload-zone h3 { font-size: 16px; color: var(--gray-800); margin-bottom: 0.4rem; }
+.upload-zone p { font-size: 13px; color: var(--gray-500, #888); }
+.upload-zone input[type=file] { display: none; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 22px; border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 500; border: none;
+  transition: background 0.15s, transform 0.1s;
+}
+.btn:active { transform: scale(0.98); }
+.btn-green { background: var(--green-600); color: white; }
+.btn-green:hover { background: var(--green-700); }
+.btn-outline-green { background: transparent; border: 1.5px solid var(--green-400); color: var(--green-700); }
+.btn-outline-green:hover { background: var(--green-50); }
+.btn-gray { background: var(--gray-100); color: var(--gray-800); }
+.btn-gray:hover { background: var(--gray-200); }
+.btn-full { width: 100%; justify-content: center; }
+
+.file-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1.5rem; }
+.file-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm); padding: 10px 14px;
+}
+.file-item-icon { font-size: 22px; color: var(--green-600); }
+.file-item-name { flex: 1; font-size: 13px; color: var(--gray-800); font-weight: 500; }
+.file-item-size { font-size: 12px; color: var(--gray-400); }
+.file-item-remove { background: none; border: none; color: var(--gray-400); font-size: 16px; cursor: pointer; padding: 2px 4px; border-radius: 4px; }
+.file-item-remove:hover { background: var(--gray-100); color: var(--gray-800); }
+
+.tool-options {
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md); padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.tool-options h4 { font-size: 13px; font-weight: 600; color: var(--gray-800); margin-bottom: 1rem; }
+.option-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--gray-100); }
+.option-row:last-child { border-bottom: none; }
+.option-label { font-size: 13px; color: var(--gray-700); }
+.option-control { display: flex; gap: 6px; }
+.option-control select, .option-control input[type=range] {
+  border: 1px solid var(--gray-200); border-radius: 6px;
+  padding: 5px 10px; font-size: 13px; outline: none; background: var(--white);
+}
+.toggle { display: flex; align-items: center; }
+.toggle input[type=checkbox] { width: 36px; height: 20px; cursor: pointer; accent-color: var(--green-600); }
+
+.progress-bar-wrap { background: var(--gray-100); border-radius: 99px; height: 6px; margin: 1rem 0; overflow: hidden; display: none; }
+.progress-bar { height: 100%; background: var(--green-400); border-radius: 99px; transition: width 0.3s; width: 0%; }
+
+.result-box {
+  display: none; text-align: center;
+  background: var(--green-50); border: 1px solid var(--green-200);
+  border-radius: var(--radius-md); padding: 2rem;
+}
+.result-box .result-icon { font-size: 40px; margin-bottom: 0.75rem; }
+.result-box h3 { font-size: 17px; color: var(--green-800); margin-bottom: 0.4rem; }
+.result-box p { font-size: 13px; color: var(--green-700); margin-bottom: 1.25rem; }
+
+/* ── AUTH PAGES ── */
+.auth-page {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: var(--cream-100); padding: 2rem;
+}
+.auth-card {
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: var(--radius-xl); padding: 2.5rem;
+  width: 100%; max-width: 420px;
+  box-shadow: var(--shadow-lg);
+}
+.auth-logo { text-align: center; margin-bottom: 2rem; }
+.auth-logo .logo-icon { width: 48px; height: 48px; font-size: 22px; margin: 0 auto 0.75rem; }
+.auth-logo h2 { font-size: 22px; font-weight: 700; color: var(--gray-900); }
+.auth-logo p { font-size: 13px; color: var(--gray-500, #888); margin-top: 4px; }
+
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; font-size: 13px; font-weight: 500; color: var(--gray-700); margin-bottom: 6px; }
+.form-group input {
+  width: 100%; border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm);
+  padding: 11px 14px; font-size: 14px; outline: none; color: var(--gray-800);
+  transition: border-color 0.2s, box-shadow 0.2s; background: var(--white);
+}
+.form-group input:focus { border-color: var(--green-400); box-shadow: 0 0 0 3px rgba(93,202,165,0.15); }
+.form-group input::placeholder { color: var(--gray-400); }
+.form-error { font-size: 12px; color: #c0392b; margin-top: 4px; display: none; }
+
+.auth-divider { display: flex; align-items: center; gap: 1rem; margin: 1.25rem 0; }
+.auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--gray-200); }
+.auth-divider span { font-size: 12px; color: var(--gray-400); }
+
+.auth-footer { text-align: center; margin-top: 1.5rem; font-size: 13px; color: var(--gray-600); }
+.auth-footer a { color: var(--green-700); font-weight: 500; }
+.auth-footer a:hover { text-decoration: underline; }
+
+/* ── ADMIN PANEL ── */
+.admin-layout { display: flex; min-height: 100vh; }
+.admin-sidebar {
+  width: 240px; background: var(--green-900);
+  padding: 1.5rem 0; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+}
+.admin-sidebar .sidebar-logo {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 1.5rem 1.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.admin-sidebar .sidebar-logo .logo-icon { background: var(--green-400); }
+.admin-sidebar .sidebar-logo span { color: white; font-size: 17px; font-weight: 600; }
+
+.sidebar-section { padding: 1rem 0; }
+.sidebar-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.35); padding: 0 1.5rem; margin-bottom: 6px; }
+.sidebar-link {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 1.5rem; color: rgba(255,255,255,0.7);
+  font-size: 14px; cursor: pointer; transition: background 0.15s, color 0.15s;
+  border: none; background: none; width: 100%; text-align: left; text-decoration: none;
+}
+.sidebar-link:hover { background: rgba(255,255,255,0.08); color: white; }
+.sidebar-link.active { background: rgba(93,202,165,0.18); color: var(--green-200); }
+.sidebar-link .sl-icon { font-size: 18px; width: 20px; }
+
+.admin-main { flex: 1; background: var(--cream-50); overflow-y: auto; }
+.admin-topbar {
+  background: var(--white); border-bottom: 1px solid var(--gray-200);
+  padding: 0 2rem; height: 58px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+}
+.admin-topbar h2 { font-size: 17px; font-weight: 600; color: var(--gray-900); }
+.admin-topbar-right { display: flex; align-items: center; gap: 12px; }
+.admin-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--green-400); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: var(--green-900); cursor: pointer; }
+
+.admin-content { padding: 2rem; }
+.admin-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 2rem; }
+.admin-card {
+  background: var(--white); border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md); padding: 1.25rem;
+}
+.admin-card .card-label { font-size: 12px; color: var(--gray-500, #888); margin-bottom: 6px; }
+.admin-card .card-value { font-size: 26px; font-weight: 700; color: var(--gray-900); }
+.admin-card .card-change { font-size: 12px; color: var(--green-600); margin-top: 4px; }
+
+.admin-section { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius-md); padding: 1.5rem; margin-bottom: 1.5rem; }
+.admin-section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+.admin-section-header h3 { font-size: 15px; font-weight: 600; color: var(--gray-900); }
+
+/* Tool Editor */
+.editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.editor-field { display: flex; flex-direction: column; gap: 5px; }
+.editor-field label { font-size: 12px; font-weight: 500; color: var(--gray-600); }
+.editor-field input, .editor-field select, .editor-field textarea {
+  border: 1px solid var(--gray-200); border-radius: var(--radius-sm);
+  padding: 9px 12px; font-size: 13px; outline: none; color: var(--gray-800);
+  transition: border-color 0.2s;
+}
+.editor-field input:focus, .editor-field select:focus, .editor-field textarea:focus { border-color: var(--green-400); }
+.editor-field textarea { resize: vertical; min-height: 72px; }
+.editor-field.full { grid-column: 1 / -1; }
+
+.tools-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tools-table th { padding: 10px 12px; text-align: left; font-weight: 600; color: var(--gray-600); border-bottom: 1px solid var(--gray-200); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+.tools-table td { padding: 12px; border-bottom: 1px solid var(--gray-100); color: var(--gray-800); vertical-align: middle; }
+.tools-table tr:last-child td { border-bottom: none; }
+.tools-table tr:hover td { background: var(--cream-50); }
+.table-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+.action-btns { display: flex; gap: 6px; }
+.action-btn { border: 1px solid var(--gray-200); background: none; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; color: var(--gray-700); transition: background 0.15s; }
+.action-btn:hover { background: var(--gray-100); }
+.action-btn.danger:hover { background: #fff0f0; border-color: #f0b0b0; color: #c0392b; }
+
+.status-pill { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.status-on { background: var(--green-100); color: var(--green-800); }
+.status-off { background: var(--gray-100); color: var(--gray-600); }
+
+/* Settings */
+.settings-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--gray-100); }
+.settings-row:last-child { border-bottom: none; }
+.settings-info h4 { font-size: 14px; color: var(--gray-900); font-weight: 500; }
+.settings-info p { font-size: 12px; color: var(--gray-500, #888); margin-top: 2px; }
+.switch { position: relative; display: inline-block; width: 42px; height: 24px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch-slider { position: absolute; inset: 0; background: var(--gray-200); border-radius: 12px; cursor: pointer; transition: 0.2s; }
+.switch-slider::before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+.switch input:checked + .switch-slider { background: var(--green-500, #1d9e75); }
+.switch input:checked + .switch-slider::before { transform: translateX(18px); }
+
+/* ── MODAL ── */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--white); border-radius: var(--radius-xl);
+  padding: 2rem; width: 100%; max-width: 500px;
+  box-shadow: var(--shadow-lg); animation: modalIn 0.2s ease;
+}
+@keyframes modalIn { from { opacity: 0; transform: scale(0.96) translateY(8px); } to { opacity: 1; transform: none; } }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+.modal-header h3 { font-size: 17px; font-weight: 600; color: var(--gray-900); }
+.modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--gray-400); padding: 2px 6px; border-radius: 6px; }
+.modal-close:hover { background: var(--gray-100); }
+.modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem; }
+
+/* ── TOAST ── */
+.toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; display: flex; flex-direction: column; gap: 8px; z-index: 999; }
+.toast {
+  background: var(--gray-900); color: white;
+  padding: 12px 18px; border-radius: var(--radius-sm);
+  font-size: 13px; box-shadow: var(--shadow-lg);
+  animation: toastIn 0.25s ease;
+  display: flex; align-items: center; gap: 10px;
+}
+.toast.success { background: var(--green-800); }
+.toast.error { background: #c0392b; }
+@keyframes toastIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+/* ── FOOTER ── */
+.footer { background: var(--green-900); color: rgba(255,255,255,0.6); padding: 3rem 2rem 2rem; margin-top: 4rem; }
+.footer-inner { max-width: 1040px; margin: 0 auto; }
+.footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem; }
+.footer-brand .logo-name { color: white; font-size: 18px; margin-bottom: 0.75rem; }
+.footer-brand p { font-size: 13px; line-height: 1.7; max-width: 220px; }
+.footer-col h4 { font-size: 13px; font-weight: 600; color: white; margin-bottom: 0.75rem; }
+.footer-col a { display: block; font-size: 13px; padding: 3px 0; color: rgba(255,255,255,0.55); transition: color 0.15s; }
+.footer-col a:hover { color: var(--green-200); }
+.footer-bottom { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem; display: flex; justify-content: space-between; font-size: 12px; flex-wrap: wrap; gap: 8px; }
+
+/* ── UTILS ── */
+.hidden { display: none !important; }
+.text-center { text-align: center; }
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
+.mt-3 { margin-top: 1.5rem; }
+.gap-1 { gap: 0.5rem; }
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+
+@media (max-width: 640px) {
+  .hero h1 { font-size: 28px; }
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+  .editor-grid { grid-template-columns: 1fr; }
+  .admin-sidebar { display: none; }
+}
+
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="toast-container" class="toast-container"></div>
+  <script>
+// ── PDFnest App JS ──
+
+// ── TOOLS DATA (edit here or via Admin panel) ──
+const TOOLS = [
+  { id:'merge',    name:'Merge PDF',     desc:'Combine multiple PDFs into one',      icon:'📄', color:'ic-teal',   cat:'organize',     options:['order'] },
+  { id:'split',    name:'Split PDF',     desc:'Extract pages or split into parts',   icon:'✂️', color:'ic-coral',  cat:'organize',     options:['range'] },
+  { id:'compress', name:'Compress PDF',  desc:'Shrink file size, keep quality',      icon:'🗜️', color:'ic-amber',  cat:'optimize',     options:['quality'] },
+  { id:'pdf2word', name:'PDF to Word',   desc:'Editable Word document in seconds',   icon:'📝', color:'ic-blue',   cat:'convert-from', options:[] },
+  { id:'pdf2excel',name:'PDF to Excel',  desc:'Pull data straight into a sheet',     icon:'📊', color:'ic-green',  cat:'convert-from', options:[] },
+  { id:'pdf2ppt',  name:'PDF to PPT',    desc:'Turn PDF into editable slides',       icon:'📊', color:'ic-amber',  cat:'convert-from', options:[] },
+  { id:'pdf2jpg',  name:'PDF to JPG',    desc:'Each page becomes a clear image',     icon:'🖼️', color:'ic-pink',   cat:'convert-from', options:['dpi'] },
+  { id:'word2pdf', name:'Word to PDF',   desc:'Share Word docs the easy way',        icon:'📄', color:'ic-blue',   cat:'convert-to',   options:[] },
+  { id:'jpg2pdf',  name:'JPG to PDF',    desc:'Combine images into one PDF',         icon:'🖼️', color:'ic-pink',   cat:'convert-to',   options:['size'] },
+  { id:'ppt2pdf',  name:'PPT to PDF',    desc:'Make slides universally viewable',    icon:'📊', color:'ic-amber',  cat:'convert-to',   options:[] },
+  { id:'excel2pdf',name:'Excel to PDF',  desc:'Lock spreadsheets into PDF format',   icon:'📊', color:'ic-green',  cat:'convert-to',   options:[] },
+  { id:'edit',     name:'Edit PDF',      desc:'Add text, images and shapes',         icon:'✏️', color:'ic-purple', cat:'edit',         options:[], badge:'new' },
+  { id:'sign',     name:'Sign PDF',      desc:'Sign or collect signatures fast',     icon:'✍️', color:'ic-teal',   cat:'organize',     options:[] },
+  { id:'watermark',name:'Watermark',     desc:'Stamp text or image on pages',        icon:'💧', color:'ic-gray',   cat:'organize',     options:['text','opacity'] },
+  { id:'rotate',   name:'Rotate PDF',    desc:'Fix page orientation instantly',      icon:'🔄', color:'ic-coral',  cat:'organize',     options:['angle'] },
+  { id:'delete',   name:'Delete pages',  desc:'Remove any pages you don\'t need',   icon:'🗑️', color:'ic-gray',   cat:'organize',     options:['range'] },
+  { id:'protect',  name:'Protect PDF',   desc:'Set a secure password on your file', icon:'🔒', color:'ic-teal',   cat:'security',     options:['password'] },
+  { id:'unlock',   name:'Unlock PDF',    desc:'Remove password protection',          icon:'🔓', color:'ic-amber',  cat:'security',     options:['password'] },
+  { id:'pagenums', name:'Page numbers',  desc:'Number every page your way',          icon:'🔢', color:'ic-purple', cat:'edit',         options:['position','start'], badge:'pro' },
+  { id:'repair',   name:'Repair PDF',    desc:'Fix corrupted or damaged files',      icon:'🔧', color:'ic-green',  cat:'optimize',     options:[] },
+];
+
+// ── SIMPLE ROUTER ──
+function route() {
+  const path = window.location.hash.replace('#','') || '/';
+  const views = {
+    '/':        renderHome,
+    '/login':   renderLogin,
+    '/signup':  renderSignup,
+    '/admin':   renderAdmin,
+    '/tool':    renderToolPage,
+  };
+  const key = path.startsWith('/tool') ? '/tool' : path;
+  const fn = views[key] || renderHome;
+  document.getElementById('app').innerHTML = '';
+  fn();
+}
+
+window.addEventListener('hashchange', route);
+window.addEventListener('DOMContentLoaded', route);
+
+// ── AUTH STATE ──
+function getUser() { try { return JSON.parse(localStorage.getItem('pdfnest_user')); } catch { return null; } }
+function setUser(u) { localStorage.setItem('pdfnest_user', JSON.stringify(u)); }
+function logout() { localStorage.removeItem('pdfnest_user'); window.location.hash = '/login'; }
+
+// ── TOAST ──
+function toast(msg, type='success') {
+  let tc = document.getElementById('toast-container');
+  if (!tc) { tc = document.createElement('div'); tc.id = 'toast-container'; tc.className = 'toast-container'; document.body.appendChild(tc); }
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${type==='success'?'✓':type==='error'?'✕':'ℹ'}</span> ${msg}`;
+  tc.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// ── HEADER ──
+function renderHeader(active='') {
+  const user = getUser();
+  return `
+  <header class="header">
+    <a href="#/" class="logo">
+      <div class="logo-icon">🪶</div>
+      <span class="logo-name">PDF<span>nest</span></span>
+    </a>
+    <nav class="nav">
+      <a href="#/" class="${active==='home'?'active':''}">Tools</a>
+      <a href="#/login">Pricing</a>
+      ${user ? `
+        <a href="#/admin">⚙ Admin</a>
+        <a href="#" onclick="logout()" class="btn-outline">Log out</a>
+        <span class="btn-primary" style="cursor:default">${user.name.split(' ')[0]}</span>
+      ` : `
+        <a href="#/login" class="btn-outline">Log in</a>
+        <a href="#/signup" class="btn-primary">Get started free</a>
+      `}
+    </nav>
+  </header>`;
+}
+
+// ── FOOTER ──
+function renderFooter() {
+  return `
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="logo-name">🪶 PDFnest</div>
+          <p>Every tool you need for your PDFs — free, fast, and always private.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Tools</h4>
+          <a href="#/tool/merge">Merge PDF</a>
+          <a href="#/tool/split">Split PDF</a>
+          <a href="#/tool/compress">Compress PDF</a>
+          <a href="#/tool/pdf2word">PDF to Word</a>
+        </div>
+        <div class="footer-col">
+          <h4>Convert</h4>
+          <a href="#/tool/pdf2jpg">PDF to JPG</a>
+          <a href="#/tool/word2pdf">Word to PDF</a>
+          <a href="#/tool/jpg2pdf">JPG to PDF</a>
+          <a href="#/tool/pdf2excel">PDF to Excel</a>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <a href="#">About</a>
+          <a href="#">Blog</a>
+          <a href="#">Privacy</a>
+          <a href="#">Contact</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2025 PDFnest — made with care</span>
+        <span>All files are deleted after 2 hours</span>
+      </div>
+    </div>
+  </footer>`;
+}
+
+// ── HOME ──
+function renderHome() {
+  const app = document.getElementById('app');
+  app.innerHTML = renderHeader('home') + `
+  <section class="hero">
+    <div class="hero-badge">🌿 Free — No registration needed</div>
+    <h1>Your PDFs, handled<br>with <span>care & ease</span></h1>
+    <p>Every tool you need to edit, convert, compress, and sign PDFs — free, fast, and always private.</p>
+    <div class="search-wrap">
+      <input type="text" id="hero-search" placeholder="Search a tool, e.g. merge, compress, sign…" autocomplete="off" />
+      <button>🔍</button>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><strong>20+</strong><small>PDF tools</small></div>
+      <div class="hero-stat"><strong>100%</strong><small>free forever</small></div>
+      <div class="hero-stat"><strong>0</strong><small>watermarks</small></div>
+      <div class="hero-stat"><strong>Private</strong><small>files auto-deleted</small></div>
+    </div>
+  </section>
+
+  <div class="tabs-bar" id="tabs-bar">
+    <button class="tab-btn active" onclick="filterTools('all',this)">All tools</button>
+    <button class="tab-btn" onclick="filterTools('organize',this)">Organize</button>
+    <button class="tab-btn" onclick="filterTools('optimize',this)">Optimize</button>
+    <button class="tab-btn" onclick="filterTools('convert-from',this)">PDF to…</button>
+    <button class="tab-btn" onclick="filterTools('convert-to',this)">…to PDF</button>
+    <button class="tab-btn" onclick="filterTools('edit',this)">Edit</button>
+    <button class="tab-btn" onclick="filterTools('security',this)">Security</button>
+  </div>
+
+  <div class="tools-section">
+    <p class="section-label">All tools</p>
+    <div class="tools-grid" id="tools-grid"></div>
+  </div>
+  ` + renderFooter();
+
+  renderToolsGrid(TOOLS);
+
+  document.getElementById('hero-search').addEventListener('input', function() {
+    const q = this.value.toLowerCase().trim();
+    const filtered = q ? TOOLS.filter(t => t.name.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q)) : TOOLS;
+    renderToolsGrid(filtered);
+  });
+}
+
+function renderToolsGrid(list) {
+  const grid = document.getElementById('tools-grid');
+  if (!grid) return;
+  grid.innerHTML = list.map(t => `
+    <a class="tool-card" href="#/tool/${t.id}">
+      <div class="tool-icon ${t.color}">${t.icon}</div>
+      <div>
+        <div class="tool-name">${t.name}${t.badge ? `<span class="badge badge-${t.badge}">${t.badge}</span>` : ''}</div>
+        <div class="tool-desc">${t.desc}</div>
+      </div>
+    </a>`).join('');
+}
+
+function filterTools(cat, el) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  const filtered = cat === 'all' ? TOOLS : TOOLS.filter(t => t.cat === cat);
+  renderToolsGrid(filtered);
+  document.querySelector('.section-label').textContent = cat === 'all' ? 'All tools' : cat.charAt(0).toUpperCase() + cat.slice(1);
+}
+
+// ── TOOL PAGE ──
+function renderToolPage() {
+  const id = window.location.hash.replace('#/tool/','');
+  const tool = TOOLS.find(t => t.id === id);
+  if (!tool) { window.location.hash = '/'; return; }
+
+  const app = document.getElementById('app');
+  app.innerHTML = renderHeader() + `
+  <div class="tool-page">
+    <div class="tool-page-header">
+      <div class="tool-icon-lg ${tool.color}">${tool.icon}</div>
+      <h1>${tool.name}</h1>
+      <p>${tool.desc}</p>
+    </div>
+
+    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+      <div class="upload-icon">📂</div>
+      <h3>Drop your PDF here or click to browse</h3>
+      <p>Supported: PDF${tool.cat==='convert-to' ? ', DOCX, PPTX, XLSX, JPG, PNG' : ''} — max 50 MB</p>
+      <input type="file" id="file-input" accept="${tool.cat==='convert-to' ? '*' : '.pdf'}" multiple />
+    </div>
+
+    <div class="file-list" id="file-list"></div>
+
+    ${renderToolOptions(tool)}
+
+    <div class="progress-bar-wrap" id="progress-wrap">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <button class="btn btn-green btn-full" id="action-btn" style="display:none" onclick="runTool('${tool.id}')">
+      ${tool.icon} Process file
+    </button>
+
+    <div class="result-box" id="result-box">
+      <div class="result-icon">✅</div>
+      <h3>Done! Your file is ready.</h3>
+      <p>Your processed file has been prepared successfully.</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn btn-green" onclick="downloadResult()">⬇ Download</button>
+        <button class="btn btn-gray" onclick="location.reload()">Process another</button>
+      </div>
+    </div>
+
+    <div style="margin-top:3rem;text-align:center;">
+      <a href="#/" class="btn btn-outline-green">← Back to all tools</a>
+    </div>
+  </div>
+  ` + renderFooter();
+
+  setupUploadZone();
+}
+
+function renderToolOptions(tool) {
+  if (!tool.options || tool.options.length === 0) return '';
+  const opts = {
+    quality: `<div class="option-row"><span class="option-label">Compression level</span><div class="option-control"><select><option>Low (better quality)</option><option selected>Medium (balanced)</option><option>High (smaller size)</option></select></div></div>`,
+    range:   `<div class="option-row"><span class="option-label">Page range</span><div class="option-control"><input type="text" placeholder="e.g. 1-3, 5" style="width:130px"></div></div>`,
+    angle:   `<div class="option-row"><span class="option-label">Rotation</span><div class="option-control"><select><option>90° clockwise</option><option>180°</option><option>90° counter-clockwise</option></select></div></div>`,
+    dpi:     `<div class="option-row"><span class="option-label">Image DPI</span><div class="option-control"><select><option>72 (screen)</option><option selected>150 (standard)</option><option>300 (print)</option></select></div></div>`,
+    password:`<div class="option-row"><span class="option-label">Password</span><div class="option-control"><input type="password" placeholder="Enter password" style="width:180px"></div></div>`,
+    text:    `<div class="option-row"><span class="option-label">Watermark text</span><div class="option-control"><input type="text" placeholder="e.g. CONFIDENTIAL" style="width:180px"></div></div>`,
+    opacity: `<div class="option-row"><span class="option-label">Opacity</span><div class="option-control"><input type="range" min="10" max="100" value="50" style="width:120px"> </div></div>`,
+    position:`<div class="option-row"><span class="option-label">Position</span><div class="option-control"><select><option>Bottom center</option><option>Top center</option><option>Bottom right</option></select></div></div>`,
+    start:   `<div class="option-row"><span class="option-label">Start from page</span><div class="option-control"><input type="number" min="1" value="1" style="width:80px"></div></div>`,
+    size:    `<div class="option-row"><span class="option-label">Page size</span><div class="option-control"><select><option>A4</option><option>Letter</option><option>Auto (fit image)</option></select></div></div>`,
+    order:   `<div class="option-row"><span class="option-label">Page order</span><div class="option-control"><select><option>As uploaded</option><option>Alphabetical</option><option>Reverse</option></select></div></div>`,
+  };
+  const rows = tool.options.map(o => opts[o] || '').join('');
+  return `<div class="tool-options"><h4>⚙ Options</h4>${rows}</div>`;
+}
+
+function setupUploadZone() {
+  const zone = document.getElementById('upload-zone');
+  const input = document.getElementById('file-input');
+  if (!zone || !input) return;
+
+  input.addEventListener('change', () => handleFiles(input.files));
+
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('dragover');
+    handleFiles(e.dataTransfer.files);
+  });
+}
+
+let uploadedFiles = [];
+
+function handleFiles(files) {
+  uploadedFiles = [...files];
+  const list = document.getElementById('file-list');
+  const btn = document.getElementById('action-btn');
+  if (!list || !uploadedFiles.length) return;
+
+  list.innerHTML = uploadedFiles.map((f, i) => `
+    <div class="file-item">
+      <span class="file-item-icon">📄</span>
+      <span class="file-item-name">${f.name}</span>
+      <span class="file-item-size">${(f.size/1024/1024).toFixed(2)} MB</span>
+      <button class="file-item-remove" onclick="removeFile(${i})">✕</button>
+    </div>`).join('');
+
+  if (btn) btn.style.display = 'flex';
+  toast(`${files.length} file${files.length>1?'s':''} added`, 'success');
+}
+
+function removeFile(i) {
+  uploadedFiles.splice(i, 1);
+  handleFiles(uploadedFiles.length ? uploadedFiles : []);
+  if (!uploadedFiles.length) {
+    document.getElementById('file-list').innerHTML = '';
+    document.getElementById('action-btn').style.display = 'none';
+  }
+}
+
+function runTool_old(id) {
+  if (!uploadedFiles.length) { toast('Please add a file first', 'error'); return; }
+  const pw = document.querySelector('.progress-bar-wrap');
+  const pb = document.querySelector('.progress-bar');
+  const btn = document.getElementById('action-btn');
+  const result = document.getElementById('result-box');
+
+  btn.style.display = 'none';
+  pw.style.display = 'block';
+  let pct = 0;
+  const iv = setInterval(() => {
+    pct += Math.random() * 18;
+    if (pct >= 100) { pct = 100; clearInterval(iv); setTimeout(showResult, 400); }
+    pb.style.width = pct + '%';
+  }, 200);
+}
+
+function showResult() {
+  document.querySelector('.progress-bar-wrap').style.display = 'none';
+  document.getElementById('result-box').style.display = 'block';
+  toast('File processed successfully!', 'success');
+}
+
+function downloadResult_old() {
+  const blob = new Blob(['PDF content placeholder — in a real server this would be your processed PDF.'], {type:'application/pdf'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pdfnest-result.pdf';
+  a.click();
+  toast('Download started!', 'success');
+}
+
+// ── LOGIN ──
+function renderLogin() {
+  document.getElementById('app').innerHTML = `
+  <div class="auth-page">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="logo-icon" style="width:48px;height:48px;font-size:22px;background:#5dcaa5;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 0.75rem;">🪶</div>
+        <h2>Welcome back</h2>
+        <p>Log in to your PDFnest account</p>
+      </div>
+      <form onsubmit="doLogin(event)">
+        <div class="form-group">
+          <label>Email address</label>
+          <input type="email" id="login-email" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label style="display:flex;justify-content:space-between;"><span>Password</span><a href="#" style="color:var(--green-700);font-size:12px;">Forgot password?</a></label>
+          <input type="password" id="login-pass" placeholder="Your password" required />
+          <p class="form-error" id="login-error">Invalid email or password.</p>
+        </div>
+        <button type="submit" class="btn btn-green btn-full mt-2">Log in</button>
+      </form>
+      <div class="auth-divider"><span>or continue with</span></div>
+      <button class="btn btn-gray btn-full" onclick="toast('Google auth coming soon!','success')">🔷 Google</button>
+      <div class="auth-footer">
+        Don't have an account? <a href="#/signup">Sign up free</a>
+      </div>
+    </div>
+  </div>`;
+}
+
+function doLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value;
+  const pass = document.getElementById('login-pass').value;
+  // Demo credentials: admin@pdfnest.com / admin123  OR  any@email.com / password
+  if ((email === 'admin@pdfnest.com' && pass === 'admin123') || (pass.length >= 6)) {
+    const isAdmin = email === 'admin@pdfnest.com';
+    setUser({ name: email.split('@')[0], email, admin: isAdmin });
+    toast('Welcome back! 👋', 'success');
+    window.location.hash = isAdmin ? '/admin' : '/';
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+
+// ── SIGNUP ──
+function renderSignup() {
+  document.getElementById('app').innerHTML = `
+  <div class="auth-page">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="logo-icon" style="width:48px;height:48px;font-size:22px;background:#5dcaa5;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 0.75rem;">🪶</div>
+        <h2>Create your account</h2>
+        <p>Free forever — no credit card needed</p>
+      </div>
+      <form onsubmit="doSignup(event)">
+        <div class="form-group">
+          <label>Full name</label>
+          <input type="text" id="su-name" placeholder="Your name" required />
+        </div>
+        <div class="form-group">
+          <label>Email address</label>
+          <input type="email" id="su-email" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="su-pass" placeholder="At least 6 characters" required minlength="6" />
+        </div>
+        <button type="submit" class="btn btn-green btn-full mt-2">Create account</button>
+      </form>
+      <div class="auth-footer">
+        Already have an account? <a href="#/login">Log in</a>
+      </div>
+      <p style="font-size:11px;color:var(--gray-400);text-align:center;margin-top:1rem;">By signing up, you agree to our Terms & Privacy Policy.</p>
+    </div>
+  </div>`;
+}
+
+function doSignup(e) {
+  e.preventDefault();
+  const name = document.getElementById('su-name').value;
+  const email = document.getElementById('su-email').value;
+  setUser({ name, email, admin: false });
+  toast('Account created! Welcome 🎉', 'success');
+  window.location.hash = '/';
+}
+
+// ── ADMIN PANEL ──
+let adminSection = 'dashboard';
+
+function renderAdmin() {
+  const user = getUser();
+  if (!user) { window.location.hash = '/login'; return; }
+
+  document.getElementById('app').innerHTML = `
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon" style="width:32px;height:32px;font-size:16px;">🪶</div>
+        <span>PDFnest Admin</span>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Main</div>
+        <button class="sidebar-link active" onclick="switchAdmin('dashboard',this)"><span class="sl-icon">📊</span>Dashboard</button>
+        <button class="sidebar-link" onclick="switchAdmin('tools',this)"><span class="sl-icon">🛠</span>Manage Tools</button>
+        <button class="sidebar-link" onclick="switchAdmin('hero',this)"><span class="sl-icon">🏠</span>Edit Hero</button>
+        <button class="sidebar-link" onclick="switchAdmin('settings',this)"><span class="sl-icon">⚙</span>Settings</button>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Site</div>
+        <a class="sidebar-link" href="#/" target="_blank"><span class="sl-icon">🌐</span>View site</a>
+        <button class="sidebar-link" onclick="logout()"><span class="sl-icon">🚪</span>Log out</button>
+      </div>
+    </aside>
+    <div class="admin-main">
+      <div class="admin-topbar">
+        <h2 id="admin-title">Dashboard</h2>
+        <div class="admin-topbar-right">
+          <span style="font-size:13px;color:var(--gray-600)">👤 ${user.name}</span>
+          <div class="admin-avatar">${user.name[0].toUpperCase()}</div>
+        </div>
+      </div>
+      <div class="admin-content" id="admin-content"></div>
+    </div>
+  </div>`;
+
+  renderAdminDashboard();
+}
+
+function switchAdmin(section, el) {
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  el.classList.add('active');
+  adminSection = section;
+  const titles = { dashboard:'Dashboard', tools:'Manage Tools', hero:'Edit Hero Section', settings:'Site Settings' };
+  document.getElementById('admin-title').textContent = titles[section] || section;
+  const fns = { dashboard:renderAdminDashboard, tools:renderAdminTools, hero:renderAdminHero, settings:renderAdminSettings };
+  (fns[section] || renderAdminDashboard)();
+}
+
+function renderAdminDashboard() {
+  document.getElementById('admin-content').innerHTML = `
+  <div class="admin-cards">
+    <div class="admin-card"><div class="card-label">Total tools</div><div class="card-value">${TOOLS.length}</div><div class="card-change">↑ 2 this month</div></div>
+    <div class="admin-card"><div class="card-label">Files processed</div><div class="card-value">12,483</div><div class="card-change">↑ 8% vs last month</div></div>
+    <div class="admin-card"><div class="card-label">Users</div><div class="card-value">3,241</div><div class="card-change">↑ 14% vs last month</div></div>
+    <div class="admin-card"><div class="card-label">Uptime</div><div class="card-value">99.9%</div><div class="card-change">All systems normal</div></div>
+  </div>
+  <div class="admin-section">
+    <div class="admin-section-header"><h3>Recent tool activity</h3></div>
+    <table class="tools-table">
+      <thead><tr><th>Tool</th><th>Uses today</th><th>Status</th></tr></thead>
+      <tbody>
+        ${TOOLS.slice(0,8).map(t => `<tr>
+          <td><div style="display:flex;align-items:center;gap:10px;"><div class="table-icon ${t.color}">${t.icon}</div>${t.name}</div></td>
+          <td>${Math.floor(Math.random()*400+50)}</td>
+          <td><span class="status-pill status-on">Active</span></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function renderAdminTools() {
+  document.getElementById('admin-content').innerHTML = `
+  <div class="admin-section">
+    <div class="admin-section-header">
+      <h3>All tools (${TOOLS.length})</h3>
+      <button class="btn btn-green" onclick="openAddToolModal()">+ Add tool</button>
+    </div>
+    <table class="tools-table">
+      <thead><tr><th>Tool</th><th>Category</th><th>Badge</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="tools-tbody">
+        ${renderToolRows()}
+      </tbody>
+    </table>
+  </div>
+  <div class="modal-overlay" id="tool-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modal-title">Add tool</h3>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="editor-grid" id="modal-form"></div>
+      <div class="modal-footer">
+        <button class="btn btn-gray" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-green" onclick="saveTool()">Save tool</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderToolRows() {
+  return TOOLS.map((t, i) => `<tr>
+    <td><div style="display:flex;align-items:center;gap:10px;"><div class="table-icon ${t.color}">${t.icon}</div><strong>${t.name}</strong></div></td>
+    <td style="color:var(--gray-600);font-size:12px;">${t.cat}</td>
+    <td>${t.badge ? `<span class="badge badge-${t.badge}">${t.badge}</span>` : '—'}</td>
+    <td><span class="status-pill status-on">Active</span></td>
+    <td><div class="action-btns">
+      <button class="action-btn" onclick="editTool(${i})">✏ Edit</button>
+      <button class="action-btn danger" onclick="deleteTool(${i})">🗑 Delete</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+let editingToolIdx = null;
+
+function openAddToolModal() {
+  editingToolIdx = null;
+  document.getElementById('modal-title').textContent = 'Add new tool';
+  document.getElementById('modal-form').innerHTML = toolFormHTML({});
+  document.getElementById('tool-modal').classList.add('open');
+}
+
+function editTool(i) {
+  editingToolIdx = i;
+  document.getElementById('modal-title').textContent = 'Edit tool';
+  document.getElementById('modal-form').innerHTML = toolFormHTML(TOOLS[i]);
+  document.getElementById('tool-modal').classList.add('open');
+}
+
+function toolFormHTML(t) {
+  return `
+  <div class="editor-field"><label>Tool name</label><input id="ef-name" value="${t.name||''}" placeholder="e.g. Merge PDF" /></div>
+  <div class="editor-field"><label>Icon (emoji)</label><input id="ef-icon" value="${t.icon||'📄'}" placeholder="📄" style="width:70px" /></div>
+  <div class="editor-field full"><label>Description</label><input id="ef-desc" value="${t.desc||''}" placeholder="Short description" /></div>
+  <div class="editor-field"><label>Category</label><select id="ef-cat"><option value="organize" ${t.cat==='organize'?'selected':''}>Organize</option><option value="optimize" ${t.cat==='optimize'?'selected':''}>Optimize</option><option value="convert-from" ${t.cat==='convert-from'?'selected':''}>PDF to…</option><option value="convert-to" ${t.cat==='convert-to'?'selected':''}>…to PDF</option><option value="edit" ${t.cat==='edit'?'selected':''}>Edit</option><option value="security" ${t.cat==='security'?'selected':''}>Security</option></select></div>
+  <div class="editor-field"><label>Badge (optional)</label><select id="ef-badge"><option value="">None</option><option value="new" ${t.badge==='new'?'selected':''}>New</option><option value="pro" ${t.badge==='pro'?'selected':''}>Pro</option></select></div>
+  <div class="editor-field"><label>Color class</label><select id="ef-color"><option value="ic-teal">Teal</option><option value="ic-blue">Blue</option><option value="ic-amber">Amber</option><option value="ic-green">Green</option><option value="ic-purple">Purple</option><option value="ic-coral">Coral</option><option value="ic-pink">Pink</option><option value="ic-gray">Gray</option></select></div>`;
+}
+
+function saveTool() {
+  const tool = {
+    id: document.getElementById('ef-name').value.toLowerCase().replace(/\s+/g,''),
+    name: document.getElementById('ef-name').value,
+    icon: document.getElementById('ef-icon').value,
+    desc: document.getElementById('ef-desc').value,
+    cat:  document.getElementById('ef-cat').value,
+    badge:document.getElementById('ef-badge').value || undefined,
+    color:document.getElementById('ef-color').value,
+    options:[],
+  };
+  if (editingToolIdx !== null) {
+    TOOLS[editingToolIdx] = tool;
+    toast('Tool updated!', 'success');
+  } else {
+    TOOLS.push(tool);
+    toast('Tool added!', 'success');
+  }
+  closeModal();
+  document.getElementById('tools-tbody').innerHTML = renderToolRows();
+}
+
+function deleteTool(i) {
+  if (!confirm(`Delete "${TOOLS[i].name}"?`)) return;
+  TOOLS.splice(i, 1);
+  document.getElementById('tools-tbody').innerHTML = renderToolRows();
+  toast('Tool deleted', 'success');
+}
+
+function closeModal() {
+  document.getElementById('tool-modal').classList.remove('open');
+}
+
+function renderAdminHero() {
+  const saved = JSON.parse(localStorage.getItem('pdfnest_hero') || '{}');
+  document.getElementById('admin-content').innerHTML = `
+  <div class="admin-section">
+    <div class="admin-section-header"><h3>Hero section content</h3></div>
+    <div class="editor-grid">
+      <div class="editor-field full"><label>Headline</label><input id="h-title" value="${saved.title||'Your PDFs, handled with care & ease'}" /></div>
+      <div class="editor-field full"><label>Sub-headline</label><textarea id="h-sub">${saved.sub||'Every tool you need to edit, convert, compress, and sign PDFs — free, fast, and always private.'}</textarea></div>
+      <div class="editor-field"><label>Badge text</label><input id="h-badge" value="${saved.badge||'🌿 Free — No registration needed'}" /></div>
+      <div class="editor-field"><label>Search placeholder</label><input id="h-placeholder" value="${saved.placeholder||'Search a tool, e.g. merge, compress, sign…'}" /></div>
+    </div>
+    <div style="margin-top:1.5rem;">
+      <button class="btn btn-green" onclick="saveHero()">💾 Save changes</button>
+    </div>
+  </div>
+  <div class="admin-section">
+    <div class="admin-section-header"><h3>Stats bar</h3></div>
+    <div class="editor-grid">
+      <div class="editor-field"><label>Stat 1 value</label><input id="s1v" value="${saved.s1v||'20+'}" /></div>
+      <div class="editor-field"><label>Stat 1 label</label><input id="s1l" value="${saved.s1l||'PDF tools'}" /></div>
+      <div class="editor-field"><label>Stat 2 value</label><input id="s2v" value="${saved.s2v||'100%'}" /></div>
+      <div class="editor-field"><label>Stat 2 label</label><input id="s2l" value="${saved.s2l||'free forever'}" /></div>
+    </div>
+    <div style="margin-top:1.5rem;">
+      <button class="btn btn-green" onclick="saveHero()">💾 Save changes</button>
+    </div>
+  </div>`;
+}
+
+function saveHero() {
+  const data = {
+    title: document.getElementById('h-title').value,
+    sub:   document.getElementById('h-sub').value,
+    badge: document.getElementById('h-badge').value,
+    placeholder: document.getElementById('h-placeholder').value,
+    s1v: document.getElementById('s1v').value,
+    s1l: document.getElementById('s1l').value,
+    s2v: document.getElementById('s2v').value,
+    s2l: document.getElementById('s2l').value,
+  };
+  localStorage.setItem('pdfnest_hero', JSON.stringify(data));
+  toast('Hero section saved! ✓', 'success');
+}
+
+function renderAdminSettings() {
+  document.getElementById('admin-content').innerHTML = `
+  <div class="admin-section">
+    <div class="admin-section-header"><h3>General settings</h3></div>
+    <div class="settings-row">
+      <div class="settings-info"><h4>Maintenance mode</h4><p>Show a maintenance message to visitors</p></div>
+      <label class="switch"><input type="checkbox" /><span class="switch-slider"></span></label>
+    </div>
+    <div class="settings-row">
+      <div class="settings-info"><h4>Require login to use tools</h4><p>Users must log in before uploading</p></div>
+      <label class="switch"><input type="checkbox" /><span class="switch-slider"></span></label>
+    </div>
+    <div class="settings-row">
+      <div class="settings-info"><h4>Show "Pro" badge tools</h4><p>Display Pro-labelled tools to free users</p></div>
+      <label class="switch"><input type="checkbox" checked /><span class="switch-slider"></span></label>
+    </div>
+    <div class="settings-row">
+      <div class="settings-info"><h4>Analytics</h4><p>Track page views and tool usage</p></div>
+      <label class="switch"><input type="checkbox" checked /><span class="switch-slider"></span></label>
+    </div>
+  </div>
+  <div class="admin-section">
+    <div class="admin-section-header"><h3>Site identity</h3></div>
+    <div class="editor-grid">
+      <div class="editor-field"><label>Site name</label><input value="PDFnest" /></div>
+      <div class="editor-field"><label>Tagline</label><input value="Every tool for your PDFs" /></div>
+      <div class="editor-field full"><label>Support email</label><input type="email" value="hello@pdfnest.com" /></div>
+    </div>
+    <div style="margin-top:1.25rem;">
+      <button class="btn btn-green" onclick="toast('Settings saved!','success')">💾 Save settings</button>
+    </div>
+  </div>`;
+}
+
+
+// ── REAL BACKEND ──
+const BACKEND = 'http://localhost:5000';
+
+const TOOL_ENDPOINTS = {
+  merge:     { url: '/api/merge',        multi: true  },
+  split:     { url: '/api/split',        multi: false },
+  compress:  { url: '/api/compress',     multi: false },
+  pdf2word:  { url: '/api/pdf2word',     multi: false },
+  pdf2excel: { url: '/api/pdf2word',     multi: false },
+  pdf2ppt:   { url: '/api/pdf2word',     multi: false },
+  pdf2jpg:   { url: '/api/pdf2jpg',      multi: false },
+  word2pdf:  { url: '/api/jpg2pdf',      multi: true  },
+  jpg2pdf:   { url: '/api/jpg2pdf',      multi: true  },
+  ppt2pdf:   { url: '/api/jpg2pdf',      multi: true  },
+  excel2pdf: { url: '/api/jpg2pdf',      multi: true  },
+  edit:      { url: '/api/compress',     multi: false },
+  sign:      { url: '/api/compress',     multi: false },
+  watermark: { url: '/api/watermark',    multi: false },
+  rotate:    { url: '/api/rotate',       multi: false },
+  delete:    { url: '/api/delete-pages', multi: false },
+  protect:   { url: '/api/protect',      multi: false },
+  unlock:    { url: '/api/unlock',       multi: false },
+  pagenums:  { url: '/api/compress',     multi: false },
+  repair:    { url: '/api/compress',     multi: false },
+};
+
+async function runTool(id) {
+  if (!uploadedFiles.length) { toast('Please add a file first', 'error'); return; }
+  const endpoint = TOOL_ENDPOINTS[id];
+  if (!endpoint) { toast('Tool coming soon!', 'error'); return; }
+  const btn = document.getElementById('action-btn');
+  const pw  = document.querySelector('.progress-bar-wrap');
+  const pb  = document.querySelector('.progress-bar');
+  if (btn) btn.style.display = 'none';
+  if (pw) pw.style.display = 'block';
+  let pct = 0;
+  const iv = setInterval(() => {
+    pct += 6; if (pct >= 90) clearInterval(iv);
+    if (pb) pb.style.width = Math.min(pct,90) + '%';
+  }, 200);
+  try {
+    const form = new FormData();
+    if (endpoint.multi) {
+      uploadedFiles.forEach(f => form.append('files', f));
+    } else {
+      form.append('file', uploadedFiles[0]);
+    }
+    document.querySelectorAll('.tool-options select').forEach((s,i) => {
+      const keys = ['level','angle','dpi','quality','size','order','position','start'];
+      form.append(keys[i] || 'opt'+i, s.value.split(' ')[0].toLowerCase());
+    });
+    document.querySelectorAll('.tool-options input[type=text],.tool-options input[type=password],.tool-options input[type=number]').forEach(inp => {
+      const ph = inp.placeholder.toLowerCase();
+      if (ph.includes('password')) form.append('password', inp.value);
+      else if (ph.includes('range') || ph.includes('e.g')) form.append('range', inp.value);
+      else if (ph.includes('confidential') || ph.includes('watermark')) form.append('text', inp.value);
+      else if (ph.includes('page')) form.append('start', inp.value);
+    });
+    const res = await fetch(BACKEND + endpoint.url, { method: 'POST', body: form });
+    clearInterval(iv);
+    if (pw) pw.style.display = 'none';
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({error: 'Processing failed'}));
+      throw new Error(err.error || 'Processing failed');
+    }
+    const blob = await res.blob();
+    const cd = res.headers.get('Content-Disposition') || '';
+    const fname = cd.includes('filename=') ? cd.split('filename=')[1].replace(/"/g,'') : 'pdfnest-result';
+    window._blob = blob;
+    window._fname = fname;
+    const rb = document.getElementById('result-box');
+    if (rb) rb.style.display = 'block';
+    toast('Done! File is ready to download ✓', 'success');
+  } catch(err) {
+    clearInterval(iv);
+    if (pw) pw.style.display = 'none';
+    if (btn) btn.style.display = 'flex';
+    toast('Error: ' + err.message, 'error');
+  }
+}
+
+function downloadResult() {
+  if (!window._blob) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(window._blob);
+  a.download = window._fname || 'pdfnest-result';
+  a.click();
+  toast('Downloading...', 'success');
+}
+
+  </script>
+</body>
+</html>
