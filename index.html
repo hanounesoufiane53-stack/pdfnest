@@ -1274,6 +1274,72 @@ function downloadResult() {
   toast('Downloading...', 'success');
 }
 
-  </script>
+  
+// ── REAL AUTH ──
+async function doLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value;
+  const pass = document.getElementById('login-pass').value;
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email, password: pass})
+    });
+    const data = await res.json();
+    if (data.error) {
+      document.getElementById('login-error').style.display = 'block';
+      document.getElementById('login-error').textContent = data.error;
+      return;
+    }
+    localStorage.setItem('pdfnest_token', data.token);
+    localStorage.setItem('pdfnest_user', JSON.stringify({name: data.name, email: data.email, admin: data.is_admin}));
+    toast('Welcome back! 👋', 'success');
+    window.location.hash = data.is_admin ? '/admin' : '/';
+  } catch(err) {
+    toast('Login failed: ' + err.message, 'error');
+  }
+}
+
+async function doSignup(e) {
+  e.preventDefault();
+  const name = document.getElementById('su-name').value;
+  const email = document.getElementById('su-email').value;
+  const pass = document.getElementById('su-pass').value;
+  try {
+    const res = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name, email, password: pass})
+    });
+    const data = await res.json();
+    if (data.error) {
+      toast(data.error, 'error');
+      return;
+    }
+    localStorage.setItem('pdfnest_token', data.token);
+    localStorage.setItem('pdfnest_user', JSON.stringify({name: data.name, email: data.email, admin: data.is_admin}));
+    toast('Account created! Welcome 🎉', 'success');
+    window.location.hash = '/';
+  } catch(err) {
+    toast('Signup failed: ' + err.message, 'error');
+  }
+}
+
+function logout() {
+  const token = localStorage.getItem('pdfnest_token');
+  if (token) {
+    fetch('/api/auth/logout', {method:'POST', headers:{'Authorization':'Bearer '+token}});
+  }
+  localStorage.removeItem('pdfnest_token');
+  localStorage.removeItem('pdfnest_user');
+  window.location.hash = '/login';
+}
+
+function getUser() {
+  try { return JSON.parse(localStorage.getItem('pdfnest_user')); } catch { return null; }
+}
+
+</script>
 </body>
 </html>
