@@ -21,23 +21,26 @@ SUPABASE_URL = "https://vglbfdmamherpnihmjxu.supabase.co"
 SUPABASE_KEY = "sb_publishable_ZXfEsoQZ34ZcR76yxXUq0g_Dk4HzWUc"
 SUPABASE_SECRET = "sb_secret_oDrfLkOpabRKjBaEEz063g_aFyldcpM"
 
-def supabase_request(method, endpoint, data=None, token=None):
+def supabase_request(method, endpoint, data=None):
     url = f"{SUPABASE_URL}/rest/v1/{endpoint}"
     headers = {
-        "apikey": SUPABASE_KEY,
+        "apikey": SUPABASE_SECRET,
         "Authorization": f"Bearer {SUPABASE_SECRET}",
         "Content-Type": "application/json",
         "Prefer": "return=representation"
     }
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
     body = json.dumps(data).encode() if data else None
     req = urllib.request.Request(url, data=body, headers=headers, method=method)
     try:
         with urllib.request.urlopen(req) as res:
             return json.loads(res.read().decode())
     except urllib.error.HTTPError as e:
-        return {"error": e.read().decode()}
+        error_body = e.read().decode()
+        print(f"Supabase error: {error_body}")
+        return {"error": error_body}
+    except Exception as e:
+        print(f"Request error: {e}")
+        return {"error": str(e)}
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
