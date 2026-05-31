@@ -1,9 +1,11 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
-import os, uuid, zipfile, io
+import os, uuid, zipfile, hashlib, secrets
 from pathlib import Path
 from werkzeug.utils import secure_filename
 from PyPDF2 import PdfMerger, PdfReader, PdfWriter
+import urllib.request
+import json
 
 app = Flask(__name__)
 CORS(app)
@@ -13,6 +15,38 @@ OUTPUT_FOLDER = Path("outputs")
 UPLOAD_FOLDER.mkdir(exist_ok=True)
 OUTPUT_FOLDER.mkdir(exist_ok=True)
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
+
+# ── SUPABASE CONFIG ──
+SUPABASE_URL = "https://vglbfdmamherpnihmjxu.supabase.co"
+SUPABASE_KEY = "sb_publishable_ZXfEsoQZ34ZcR76yxXUq0g_Dk4HzWUc"
+SUPABASE_SECRET = "sb_secret_oDrfLkOpabRKjBaEEz063g_aFyldcpM"
+
+def supabase_request(method, endpoint, data=None, token=None):
+    url = f"{SUPABASE_URL}/rest/v1/{endpoint}"
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SECRET}",
+        "Content-Type": "application/json",
+        "Prefer": "return=representation"
+    }
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    body = json.dumps(data).encode() if data else None
+    req = urllib.request.Request(url, data=body, headers=headers, method=method)
+    try:
+        with urllib.request.urlopen(req) as res:
+            return json.loads(res.read().decode())
+    except urllib.error.HTTPError as e:
+        return {"error": e.read().decode()}
+
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def generate_token(user_id, email):
+    return hashlib.sha256(f"{user_id}{email}{secrets.token_hex(16)}".encode()).hexdigest()
+
+# Simple in-memory session store
+sessions = {}
 
 def save_upload(file):
     uid = str(uuid.uuid4())
@@ -24,6 +58,7 @@ def save_upload(file):
 def out(name):
     return OUTPUT_FOLDER / f"{str(uuid.uuid4())}_{name}"
 
+# ── SERVE FRONTEND ──
 @app.route('/')
 def home():
     return send_file('index.html')
@@ -32,6 +67,75 @@ def home():
 def status():
     return jsonify({"status": "PDFnest is running!"})
 
+# ── AUTH ROUTES ──
+@app.route('/api/auth/signup', methods=['POST'])
+def signup():
+    try:
+        data = request.json
+        name = data.get('name','').strip()
+        email = data.get('email','').strip().lower()
+        password = data.get('password','')
+        if not name or not email or not password:
+            return jsonify({"error": "All fields required"}), 400
+        if len(password) < 6:
+            return jsonify({"error": "Password must be at least 6 characters"}), 400
+        # Check if email exists
+        existing = supabase_request('GET', f'users?email=eq.{email}&select=id')
+        if existing and len(existing) > 0:
+            return jsonify({"error": "Email already registered"}), 400
+        # Create user
+        hashed = hash_password(password)
+        new_user = supabase_request('POST', 'users', {
+            "name": name,
+            "email": email,
+            "password": hashed,
+            "is_admin": False
+        })
+        if isinstance(new_user, list) and len(new_user) > 0:
+            user = new_user[0]
+            token = generate_token(user['id'], email)
+            sessions[token] = {"id": user['id'], "name": user['name'], "email": email, "is_admin": False}
+            return jsonify({"token": token, "name": user['name'], "email": email, "is_admin": False})
+        return jsonify({"error": "Signup failed"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/auth/login', methods=['POST'])
+def login():
+    try:
+        data = request.json
+        email = data.get('email','').strip().lower()
+        password = data.get('password','')
+        if not email or not password:
+            return jsonify({"error": "Email and password required"}), 400
+        hashed = hash_password(password)
+        users = supabase_request('GET', f'users?email=eq.{email}&select=id,name,email,is_admin,password')
+        if not users or len(users) == 0:
+            return jsonify({"error": "Invalid email or password"}), 401
+        user = users[0]
+        # Check admin with plain password too for initial setup
+        if user['password'] != hashed and user['password'] != password:
+            return jsonify({"error": "Invalid email or password"}), 401
+        token = generate_token(user['id'], email)
+        sessions[token] = {"id": user['id'], "name": user['name'], "email": email, "is_admin": user['is_admin']}
+        return jsonify({"token": token, "name": user['name'], "email": email, "is_admin": user['is_admin']})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/auth/me', methods=['GET'])
+def me():
+    token = request.headers.get('Authorization','').replace('Bearer ','')
+    if token in sessions:
+        return jsonify(sessions[token])
+    return jsonify({"error": "Not authenticated"}), 401
+
+@app.route('/api/auth/logout', methods=['POST'])
+def logout():
+    token = request.headers.get('Authorization','').replace('Bearer ','')
+    sessions.pop(token, None)
+    return jsonify({"success": True})
+
+# ── PDF TOOLS ──
 @app.route('/api/merge', methods=['POST'])
 def merge_pdf():
     try:
@@ -128,6 +232,7 @@ def pdf_to_word():
 @app.route('/api/pdf2jpg', methods=['POST'])
 def pdf_to_jpg():
     try:
+        from PIL import Image, ImageDraw
         file = request.files.get('file')
         if not file: return jsonify({"error": "No file"}), 400
         path = save_upload(file)
@@ -135,11 +240,10 @@ def pdf_to_jpg():
         zip_out = out("images.zip")
         with zipfile.ZipFile(zip_out, 'w') as zf:
             for i, page in enumerate(reader.pages):
-                from PIL import Image, ImageDraw
                 img = Image.new('RGB', (800, 1100), color='white')
                 draw = ImageDraw.Draw(img)
                 text = page.extract_text() or f"Page {i+1}"
-                draw.text((50, 50), text[:500], fill='black')
+                draw.text((50, 50), text[:1000], fill='black')
                 ip = out(f"page_{i+1}.jpg")
                 img.save(str(ip), 'JPEG')
                 zf.write(ip, f"page_{i+1}.jpg")
@@ -237,7 +341,7 @@ def watermark_pdf():
         text = request.form.get('text', 'CONFIDENTIAL')
         if not file: return jsonify({"error": "No file"}), 400
         path = save_upload(file)
-        wm_path = out("watermark_layer.pdf")
+        wm_path = out("wm.pdf")
         c = canvas.Canvas(str(wm_path), pagesize=letter)
         c.setFont("Helvetica", 50)
         c.setFillAlpha(0.3)
@@ -322,4 +426,3 @@ if __name__ == '__main__':
     print("  Open: http://localhost:5000")
     print("========================================\n")
     app.run(debug=False, port=5000)
-
