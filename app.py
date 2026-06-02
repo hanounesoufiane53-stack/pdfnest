@@ -51,6 +51,48 @@ def generate_token(user_id, email):
 # Simple in-memory session store
 sessions = {}
 
+def track_tool_use(tool_name, user_email=None, file_size=0):
+    try:
+        # Record tool usage
+        supabase_request('POST', 'analytics', {
+            "tool_name": tool_name,
+            "user_email": user_email,
+            "file_size": file_size
+        })
+        # Update total files count
+        stats = supabase_request('GET', 'site_stats?select=id,total_files')
+        if stats and len(stats) > 0:
+            new_count = stats[0]['total_files'] + 1
+            supabase_request('PATCH', f'site_stats?id=eq.{stats[0]["id"]}', {
+                "total_files": new_count,
+                "updated_at": "now()"
+            })
+    except Exception as e:
+        print(f"Analytics error: {e}")
+
+def get_real_stats():
+    try:
+        stats = supabase_request('GET', 'site_stats?select=total_files,total_users')
+        users_count = supabase_request('GET', 'users?select=id')
+        tool_usage = supabase_request('GET', 'analytics?select=tool_name')
+        total_files = stats[0]['total_files'] if stats and len(stats) > 0 else 0
+        total_users = len(users_count) if users_count else 0
+        # Count tool usage
+        tool_counts = {}
+        if tool_usage:
+            for item in tool_usage:
+                t = item['tool_name']
+                tool_counts[t] = tool_counts.get(t, 0) + 1
+        return {
+            "total_files": total_files,
+            "total_users": total_users,
+            "tool_counts": tool_counts
+        }
+    except Exception as e:
+        print(f"Stats error: {e}")
+        return {"total_files": 0, "total_users": 0, "tool_counts": {}}
+
+
 def save_upload(file):
     uid = str(uuid.uuid4())
     filename = secure_filename(file.filename)
@@ -60,6 +102,38 @@ def save_upload(file):
 
 def out(name):
     return OUTPUT_FOLDER / f"{str(uuid.uuid4())}_{name}"
+
+
+def track_tool_use(tool_name, user_email=None, file_size=0):
+    try:
+        # Log tool usage
+        supabase_request('POST', 'analytics', {
+            "tool_name": tool_name,
+            "user_email": user_email,
+            "file_size": file_size
+        })
+        # Update total files count
+        stats = supabase_request('GET', 'site_stats?select=id,total_files')
+        if stats and len(stats) > 0:
+            new_count = stats[0]['total_files'] + 1
+            supabase_request('PATCH', f'site_stats?id=eq.{stats[0]["id"]}', {
+                "total_files": new_count,
+                "updated_at": "now()"
+            })
+    except Exception as e:
+        print(f"Analytics error: {e}")
+
+def track_new_user():
+    try:
+        stats = supabase_request('GET', 'site_stats?select=id,total_users')
+        if stats and len(stats) > 0:
+            new_count = stats[0]['total_users'] + 1
+            supabase_request('PATCH', f'site_stats?id=eq.{stats[0]["id"]}', {
+                "total_users": new_count,
+                "updated_at": "now()"
+            })
+    except Exception as e:
+        print(f"Analytics error: {e}")
 
 # ── SERVE FRONTEND ──
 @app.route('/')
@@ -98,6 +172,7 @@ def signup():
             user = new_user[0]
             token = generate_token(user['id'], email)
             sessions[token] = {"id": user['id'], "name": user['name'], "email": email, "is_admin": False}
+            track_new_user()
             return jsonify({"token": token, "name": user['name'], "email": email, "is_admin": False})
         return jsonify({"error": "Signup failed"}), 500
     except Exception as e:
@@ -138,6 +213,36 @@ def logout():
     sessions.pop(token, None)
     return jsonify({"success": True})
 
+
+@app.route('/api/analytics', methods=['GET'])
+def get_analytics():
+    try:
+        stats = supabase_request('GET', 'site_stats?select=*')
+        tools = supabase_request('GET', 'analytics?select=tool_name&order=created_at.desc&limit=100')
+        users_count = supabase_request('GET', 'users?select=id')
+        
+        # Count tool usage
+        tool_counts = {}
+        if isinstance(tools, list):
+            for t in tools:
+                name = t.get('tool_name','')
+                tool_counts[name] = tool_counts.get(name, 0) + 1
+        
+        total_files = 0
+        total_users = 0
+        if isinstance(stats, list) and len(stats) > 0:
+            total_files = stats[0].get('total_files', 0)
+        if isinstance(users_count, list):
+            total_users = len(users_count)
+            
+        return jsonify({
+            "total_files": total_files,
+            "total_users": total_users,
+            "tool_counts": tool_counts
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # ── PDF TOOLS ──
 @app.route('/api/merge', methods=['POST'])
 def merge_pdf():
@@ -153,6 +258,8 @@ def merge_pdf():
         o = out("merged.pdf")
         merger.write(str(o)); merger.close()
         for p in saved: p.unlink(missing_ok=True)
+        track_tool_use('Merge PDF')
+        track_tool_use('merge')
         return send_file(o, as_attachment=True, download_name="pdfnest-merged.pdf")
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -188,6 +295,8 @@ def split_pdf():
                     zf.write(pf, f"page_{i+1}.pdf")
                     pf.unlink(missing_ok=True)
         path.unlink(missing_ok=True)
+        track_tool_use('Split PDF')
+        track_tool_use('split')
         return send_file(zip_out, as_attachment=True, download_name="pdfnest-split.zip")
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -206,6 +315,8 @@ def compress_pdf():
         o = out("compressed.pdf")
         with open(o, 'wb') as f: writer.write(f)
         path.unlink(missing_ok=True)
+        track_tool_use('Compress PDF')
+        track_tool_use('compress')
         return send_file(o, as_attachment=True, download_name="pdfnest-compressed.pdf")
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -228,6 +339,8 @@ def pdf_to_word():
         o = out("converted.docx")
         doc.save(str(o))
         path.unlink(missing_ok=True)
+        track_tool_use('PDF to Word')
+        track_tool_use('pdf2word')
         return send_file(o, as_attachment=True, download_name="pdfnest-converted.docx")
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -252,6 +365,8 @@ def pdf_to_jpg():
                 zf.write(ip, f"page_{i+1}.jpg")
                 ip.unlink(missing_ok=True)
         path.unlink(missing_ok=True)
+        track_tool_use('PDF to JPG')
+        track_tool_use('pdf2jpg')
         return send_file(zip_out, as_attachment=True, download_name="pdfnest-images.zip")
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -291,6 +406,8 @@ def rotate_pdf():
         o = out("rotated.pdf")
         with open(o, 'wb') as f: writer.write(f)
         path.unlink(missing_ok=True)
+        track_tool_use('Rotate PDF')
+        track_tool_use('rotate')
         return send_file(o, as_attachment=True, download_name="pdfnest-rotated.pdf")
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -311,6 +428,8 @@ def protect_pdf():
         o = out("protected.pdf")
         with open(o, 'wb') as f: writer.write(f)
         path.unlink(missing_ok=True)
+        track_tool_use('Protect PDF')
+        track_tool_use('protect')
         return send_file(o, as_attachment=True, download_name="pdfnest-protected.pdf")
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -331,6 +450,8 @@ def unlock_pdf():
         o = out("unlocked.pdf")
         with open(o, 'wb') as f: writer.write(f)
         path.unlink(missing_ok=True)
+        track_tool_use('Unlock PDF')
+        track_tool_use('unlock')
         return send_file(o, as_attachment=True, download_name="pdfnest-unlocked.pdf")
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -365,6 +486,8 @@ def watermark_pdf():
         with open(o, 'wb') as f: writer.write(f)
         path.unlink(missing_ok=True)
         wm_path.unlink(missing_ok=True)
+        track_tool_use('Watermark PDF')
+        track_tool_use('watermark')
         return send_file(o, as_attachment=True, download_name="pdfnest-watermarked.pdf")
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -394,6 +517,7 @@ def delete_pages():
         o = out("result.pdf")
         with open(o, 'wb') as f: writer.write(f)
         path.unlink(missing_ok=True)
+        track_tool_use('Delete Pages')
         return send_file(o, as_attachment=True, download_name="pdfnest-result.pdf")
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -411,6 +535,12 @@ def generate_qr():
         return send_file(o, as_attachment=True, download_name="pdfnest-qrcode.png")
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/admin/stats')
+def admin_stats():
+    stats = get_real_stats()
+    return jsonify(stats)
 
 import threading, time
 def cleanup():
