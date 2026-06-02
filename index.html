@@ -981,24 +981,63 @@ function switchAdmin(section, el) {
   (fns[section] || renderAdminDashboard)();
 }
 
-function renderAdminDashboard() {
+async async function renderAdminDashboard() {
+  const res = await fetch('/api/admin/stats').catch(() => null);
+  const stats = res ? await res.json().catch(() => ({})) : {};
+  const totalFiles = stats.total_files || 0;
+  const totalUsers = stats.total_users || 0;
+  const toolCounts = stats.tool_counts || {};
+  const topTools = Object.entries(toolCounts).sort((a,b) => b[1]-a[1]).slice(0,8);
+
   document.getElementById('admin-content').innerHTML = `
   <div class="admin-cards">
-    <div class="admin-card"><div class="card-label">Total tools</div><div class="card-value">${TOOLS.length}</div><div class="card-change">↑ 2 this month</div></div>
-    <div class="admin-card"><div class="card-label">Files processed</div><div class="card-value">12,483</div><div class="card-change">↑ 8% vs last month</div></div>
-    <div class="admin-card"><div class="card-label">Users</div><div class="card-value">3,241</div><div class="card-change">↑ 14% vs last month</div></div>
-    <div class="admin-card"><div class="card-label">Uptime</div><div class="card-value">99.9%</div><div class="card-change">All systems normal</div></div>
-  </div>
+    <div class="admin-card"><div class="card-label">Total tools</div><div class="card-value">${TOOLS.length}</div><div class="card-change">↑ Active</div></div>
+    <div class="admin-card"><div class="card-label">Files processed</div><div class="card-value" id="stat-files">Loading...</div><div class="card-change" id="stat-files-change"></div></div>
+    <div class="admin-card"><div class="card-label">Users</div><div class="card-value" id="stat-users">Loading...</div><div class="card-change">Real users</div></div>
+    <div class="admin-card"><div class="card-label">Status</div><div class="card-value">✅ Live</div><div class="card-change">All systems normal</div></div>
+  </div>`;
+  
+  // Fetch real analytics
+  try {
+    const res = await fetch('/api/analytics');
+    const data = await res.json();
+    const filesEl = document.getElementById('stat-files');
+    const usersEl = document.getElementById('stat-users');
+    if (filesEl) filesEl.textContent = (data.total_files || 0).toLocaleString();
+    if (usersEl) usersEl.textContent = (data.total_users || 0).toLocaleString();
+    
+    // Build tool activity table
+    const toolRows = Object.entries(data.tool_counts || {})
+      .sort((a,b) => b[1]-a[1])
+      .slice(0,8)
+      .map(([name, count]) => `<tr>
+        <td>${name}</td>
+        <td>${count}</td>
+        <td><span class="status-pill status-on">Active</span></td>
+      </tr>`).join('') || TOOLS.slice(0,8).map(t => `<tr>
+        <td>${t.name}</td><td>0</td>
+        <td><span class="status-pill status-on">Active</span></td>
+      </tr>`).join('');
+      
+    const content = document.getElementById('admin-content');
+    if (content) {
+      content.innerHTML += `<div class="admin-section">
+        <div class="admin-section-header"><h3>Tool activity</h3></div>
+        <table class="tools-table">
+          <thead><tr><th>Tool</th><th>Total uses</th><th>Status</th></tr></thead>
+          <tbody>${toolRows}</tbody>
+        </table>
+      </div>`;
+    }
+  } catch(err) {
+    console.log('Analytics error:', err);
+  }
   <div class="admin-section">
     <div class="admin-section-header"><h3>Recent tool activity</h3></div>
     <table class="tools-table">
       <thead><tr><th>Tool</th><th>Uses today</th><th>Status</th></tr></thead>
       <tbody>
-        ${TOOLS.slice(0,8).map(t => `<tr>
-          <td><div style="display:flex;align-items:center;gap:10px;"><div class="table-icon ${t.color}">${t.icon}</div>${t.name}</div></td>
-          <td>${Math.floor(Math.random()*400+50)}</td>
-          <td><span class="status-pill status-on">Active</span></td>
-        </tr>`).join('')}
+        ${topTools.length > 0 ? topTools.map(([name,count]) => `<tr><td>${name}</td><td>${count}</td><td><span class="status-pill status-on">Active</span></td></tr>`).join("") : TOOLS.slice(0,8).map(t => `<tr><td><div style="display:flex;align-items:center;gap:10px;"><div class="table-icon ${t.color}">${t.icon}</div>${t.name}</div></td><td>0</td><td><span class="status-pill status-on">Active</span></td></tr>`).join("")}
       </tbody>
     </table>
   </div>`;
