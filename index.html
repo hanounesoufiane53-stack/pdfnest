@@ -981,7 +981,7 @@ function switchAdmin(section, el) {
   (fns[section] || renderAdminDashboard)();
 }
 
-async async function renderAdminDashboard() {
+async function renderAdminDashboard() {
   const res = await fetch('/api/admin/stats').catch(() => null);
   const stats = res ? await res.json().catch(() => ({})) : {};
   const totalFiles = stats.total_files || 0;
