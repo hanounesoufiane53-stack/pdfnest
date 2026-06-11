@@ -1029,18 +1029,9 @@ async function renderAdminDashboard() {
         </table>
       </div>`;
     }
-  } catch(err) {
+ } catch(err) {
     console.log('Analytics error:', err);
   }
-  <div class="admin-section">
-    <div class="admin-section-header"><h3>Recent tool activity</h3></div>
-    <table class="tools-table">
-      <thead><tr><th>Tool</th><th>Uses today</th><th>Status</th></tr></thead>
-      <tbody>
-        ${topTools.length > 0 ? topTools.map(([name,count]) => `<tr><td>${name}</td><td>${count}</td><td><span class="status-pill status-on">Active</span></td></tr>`).join("") : TOOLS.slice(0,8).map(t => `<tr><td><div style="display:flex;align-items:center;gap:10px;"><div class="table-icon ${t.color}">${t.icon}</div>${t.name}</div></td><td>0</td><td><span class="status-pill status-on">Active</span></td></tr>`).join("")}
-      </tbody>
-    </table>
-  </div>`;
 }
 
 function renderAdminTools() {
