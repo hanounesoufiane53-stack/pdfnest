@@ -7,3 +7,6 @@ python-docx
 werkzeug
 gunicorn
 reportlab
+pdfplumber
+python-pptx
+openpyxl
